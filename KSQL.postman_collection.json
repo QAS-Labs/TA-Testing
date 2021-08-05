@@ -1,0 +1,722 @@
+{
+	"info": {
+		"_postman_id": "e0eeefd3-7986-4830-8c1a-73add6271b2b",
+		"name": "KSQL",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "qtest to Kafka Test",
+			"item": [
+				{
+					"name": "qTest",
+					"item": [
+						{
+							"name": "Precondition",
+							"item": [
+								{
+									"name": "200 - Precondition - Login success",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"if (pm.response.code === 200) {",
+													"    ",
+													"    pm.test(`Run with Artifact name: ` + pm.environment.get('objectType'), () => {",
+													"       pm.expect(true).to.eql(true);",
+													"    });",
+													"    ",
+													"    pm.test(`Response status: ${pm.response.code} - Login`, () => {",
+													"        pm.response.to.have.status(200);",
+													"    });",
+													"    ",
+													"    let jsonData = pm.response.json();",
+													"    pm.environment.set('accessToken', jsonData.access_token);",
+													"    pm.environment.set('tokenType', jsonData.token_type);",
+													"",
+													"    // Constant qtest site fieldss id",
+													"    pm.environment.set('dataTypeTextbox', '1');",
+													"    pm.environment.set('dataTypeTextarea', '2');",
+													"    pm.environment.set('dataTypeCombobox', '3');",
+													"    pm.environment.set('dataTypeDatePicker', '4');",
+													"    pm.environment.set('dataTypeUserList', '5');",
+													"    pm.environment.set('dataTypeRichTextEditor', '6');",
+													"    pm.environment.set('dataTypeNumber', '7');",
+													"    pm.environment.set('dataTypeCheckbox', '8');",
+													"    pm.environment.set('dataTypeDatetimePicker', '9');",
+													"    pm.environment.set('dataTypeUrl', '12');",
+													"    pm.environment.set('dataTypeMulSelCombobox', '17');",
+													"",
+													"    pm.environment.set('createdFieldsList', '');",
+													"",
+													"    // Create login cookie of user",
+													"    const rawStr = CryptoJS.enc.Utf8.parse(jsonData.access_token);",
+													"    const base64 = CryptoJS.enc.Base64.stringify(rawStr);",
+													"    pm.environment.set('qtestUserCookie', 'UserContextToken=' + base64);",
+													"",
+													"} else {",
+													"    pm.test(`Status code: ${pm.response.code} and response body: ${pm.response.text()}`, () => {",
+													"        pm.response.to.have.status(200);",
+													"    });",
+													"}",
+													"pm.environment.set('endpoint', \"api/v3/fields/{{objectType}}\");"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"let artifactType = `${pm.iterationData.get(\"artifactName\")}`;\r",
+													"pm.environment.set('objectType', artifactType);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Basic dGFtdG1uZ3V5ZW46"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "password",
+													"type": "text"
+												},
+												{
+													"key": "username",
+													"value": "{{username}}",
+													"type": "text"
+												},
+												{
+													"key": "password",
+													"value": "{{password}}",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{qtestUrl}}/oauth/token",
+											"host": [
+												"{{qtestUrl}}"
+											],
+											"path": [
+												"oauth",
+												"token"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "200 - Precondition - Get release fields",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"if (pm.response.code === 200) {",
+													"",
+													"    pm.test(\"Status code is 200\", function() {",
+													"        pm.response.to.have.status(200);",
+													"    });",
+													"",
+													"    const PREFIX = \"fieldIdRelease\";",
+													"    var jsonData = pm.response.json();",
+													"",
+													"    jsonData.forEach(function(field) {",
+													"        pm.environment.set(PREFIX + field.label.replace(/\\s/g, \"\"), field.id);",
+													"        if (field.allowed_values) {",
+													"            field.allowed_values.forEach(function(item) {",
+													"                const fieldValueId = PREFIX + field.label + item.label.replace(/\\s/g, \"\");",
+													"                pm.environment.set(fieldValueId, item.value);",
+													"            });",
+													"        }",
+													"    });",
+													"} else {",
+													"    pm.test(\"Response status: \" + pm.response.code + \"\\n Response body: \" + pm.response.text(), function() {",
+													"        pm.response.to.have.status(200);",
+													"    });",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "{{tokenType}} {{accessToken}}"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{qtestUrl}}/api/v3/projects/{{projectId01}}/settings/releases/fields",
+											"host": [
+												"{{qtestUrl}}"
+											],
+											"path": [
+												"api",
+												"v3",
+												"projects",
+												"{{projectId01}}",
+												"settings",
+												"releases",
+												"fields"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create release 01 - INSERT",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"if (pm.response.code === 200) {",
+													"    var jsonData = pm.response.json();",
+													"    pm.environment.set(\"releaseId01\", jsonData.id);",
+													"",
+													"    pm.test(\"Status code is 200\", function() {",
+													"        pm.response.to.have.status(200);",
+													"    });",
+													"} else {",
+													"    pm.test(\"Status code: \" + pm.response.code + \"and response body:\" + pm.response.text(), function() {",
+													"        pm.response.to.have.status(200);",
+													"    });",
+													"}",
+													"    var jsonData = pm.response.json();",
+													"pm.test(\"Response data has release id \" + jsonData.id, function() {",
+													"        pm.expect(jsonData.id).to.eql(pm.environment.get(\"releaseId01\"));",
+													"    });",
+													"",
+													"",
+													"",
+													""
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"var startDate = new Date();",
+													"var endDate = new Date();",
+													"startDate.setDate(startDate.getDate() + 30);",
+													"endDate.setDate(startDate.getDate() + 40);",
+													"",
+													"pm.environment.set(\"releaseName01\" , \"releasename1\");",
+													"pm.environment.set(\"releaseDescription\", \"Description of the release 01\");",
+													"pm.environment.set(\"releaseNote\", \"Note of the release\");",
+													"pm.environment.set('startDate_r', startDate.toISOString());",
+													"pm.environment.set('endDate_r', endDate.toISOString());"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "{{tokenType}} {{accessToken}}"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"name\": \"{{releaseName01}}\",\n    \"properties\": [\n        {\n            \"field_id\": {{fieldIdReleaseStatus}},\n            \"field_value\": \"{{fieldIdReleaseStatusInProgress}}\"\n        },\n        {\n            \"field_id\": {{fieldIdReleaseStartDate}},\n            \"field_value\": \"{{startDate_r}}\"\n        },\n        {\n            \"field_id\": {{fieldIdReleaseEndDate}},\n            \"field_value\": \"{{endDate_r}}\"\n        },\n        {\n            \"field_id\": {{fieldIdReleaseDescription}},\n            \"field_value\": \"{{releaseDescription}}\"\n        },\n        {\n            \"field_id\": {{fieldIdReleaseReleaseNote}},\n            \"field_value\": \"{{releaseNote}}\"\n        }\n    ]\n}"
+										},
+										"url": {
+											"raw": "{{qtestUrl}}/api/v3/projects/{{projectId01}}/releases",
+											"host": [
+												"{{qtestUrl}}"
+											],
+											"path": [
+												"api",
+												"v3",
+												"projects",
+												"{{projectId01}}",
+												"releases"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "qTest | Build- Create",
+							"item": [
+								{
+									"name": "200 - Precondition - Get build fields",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"if (pm.response.code === 200) {",
+													"",
+													"    pm.test(\"Status code is 200\", function() {",
+													"        pm.response.to.have.status(200);",
+													"    });",
+													"",
+													"    const PREFIX = \"fieldIdBuild\";",
+													"    var jsonData = pm.response.json();",
+													"",
+													"    jsonData.forEach(function(field) {",
+													"        pm.environment.set(PREFIX + field.label.replace(/\\s/g, \"\"), field.id);",
+													"        if (field.allowed_values) {",
+													"            field.allowed_values.forEach(function(item) {",
+													"                const fieldValueId = PREFIX + field.label + item.label.replace(/\\s/g, \"\");",
+													"                pm.environment.set(fieldValueId, item.value);",
+													"            });",
+													"        }",
+													"    });",
+													"} else {",
+													"    pm.test(\"Response status: \" + pm.response.code + \"\\n Response body: \" + pm.response.text(), function() {",
+													"        pm.response.to.have.status(200);",
+													"    });",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "{{tokenType}} {{accessToken}}"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{qtestUrl}}/api/v3/projects/{{projectId01}}/settings/builds/fields",
+											"host": [
+												"{{qtestUrl}}"
+											],
+											"path": [
+												"api",
+												"v3",
+												"projects",
+												"{{projectId01}}",
+												"settings",
+												"builds",
+												"fields"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "200 - Create build - Success",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"if (pm.response.code === 200) {",
+													"",
+													"    var jsonData = pm.response.json();",
+													"    pm.environment.set(\"buildId01\", jsonData.id);",
+													"",
+													"} else {",
+													"    pm.test(\"Status code: \" + pm.response.code + \"and response body:\" + pm.response.text(), function() {",
+													"        pm.response.to.have.status(200);",
+													"    });",
+													"}",
+													"",
+													"pm.test(\"Response data has build id \" + jsonData.id, function() {",
+													"        pm.expect(jsonData.id).to.eql(pm.environment.get(\"buildId01\"));",
+													"    });"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"//var today = new Date();",
+													"pm.environment.set(\"buildName01\"+ \"Test create Build 01\");",
+													"//today.setDate(today.getDate() + 1 );",
+													"//pm.environment.set('buildDate', today.toISOString());",
+													"pm.environment.set('buildNote', \"Note of Build 1\");",
+													"",
+													"",
+													"",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "{{tokenType}} {{accessToken}}"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"name\": \"{{buildName01}}\",\n    \"release\": {\n    \t\"id\": \"{{releaseId01}}\"\n    }\n}"
+										},
+										"url": {
+											"raw": "{{qtestUrl}}/api/v3/projects/{{projectId01}}/builds",
+											"host": [
+												"{{qtestUrl}}"
+											],
+											"path": [
+												"api",
+												"v3",
+												"projects",
+												"{{projectId01}}",
+												"builds"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Ksql",
+					"item": [
+						{
+							"name": "KSQL GET Server Status",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = pm.response.json();\r",
+											"\r",
+											"pm.environment.set(\"KSQLServerStatus\", jsonData.KsqlServerInfo.serverStatus);\r",
+											"\r",
+											"pm.test(\"Response code: \" + pm.response.code + \"\\n Reponse body: \" + pm.response.text(), function () {\r",
+											"    pm.response.to.have.status('OK');\r",
+											"});\r",
+											"\r",
+											"pm.test(\"KSQL Server Status is :  \" + pm.environment.get(\"KSQLServerStatus\") , function () {\r",
+											"    pm.expect(jsonData.KsqlServerInfo.serverStatus).equals(\"RUNNING\");\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://ec2-54-158-74-115.compute-1.amazonaws.com:8088/info",
+									"protocol": "http",
+									"host": [
+										"ec2-54-158-74-115",
+										"compute-1",
+										"amazonaws",
+										"com"
+									],
+									"port": "8088",
+									"path": [
+										"info"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Validate Build has reached Kafka",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = pm.response.json();\r",
+											"\r",
+											"pm.environment.set(\"buildId02\", jsonData[1].row.columns[1]);\r",
+											"\r",
+											"// var buildId03 = \"\\\"id\\\":buildId01\";\r",
+											"// pm.environment.set(\"buildId04\", buildId03);\r",
+											"\r",
+											"pm.test(\"Response code: \" + pm.response.code + \"\\n Reponse body: \" + pm.response.text(), function () {\r",
+											"    pm.response.to.have.status('OK');\r",
+											"});\r",
+											"\r",
+											"\r",
+											"pm.test(\"Response data has Build id \" + pm.environment.get(\"buildId01\") + \" in response \", function () {\r",
+											"    pm.expect(jsonData[1].row.columns[1]).includes(pm.environment.get(\"buildId02\"));\r",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ksql\": \"SELECT * FROM builds_table1 WHERE after LIKE '%\\\"id\\\":{{buildId01}}%' EMIT CHANGES LIMIT 1;\",\r\n  \"streamsProperties\": {}\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://ec2-54-158-74-115.compute-1.amazonaws.com:8088/query",
+									"protocol": "http",
+									"host": [
+										"ec2-54-158-74-115",
+										"compute-1",
+										"amazonaws",
+										"com"
+									],
+									"port": "8088",
+									"path": [
+										"query"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "KSQL GET Server Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "KSQL GET server Healthcheck",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "KSQL GET",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Streams",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch Data",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var input = {\"id\":174382};\r",
+							"pm.environment.set(\"input01\", input);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"\r",
+							"\r",
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							" pm.environment.set(\"releaseId01\", jsonData[1].row.columns[4]);\r",
+							"pm.environment.set(\"id01\", jsonData[1].row.columns[0]);\r",
+							"\r",
+							"pm.test(\"Response code: \" + pm.response.code + \"\\n Reponse body: \" + pm.response.text(), function () {\r",
+							"    pm.response.to.have.status('OK');\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response data has release id \" + jsonData[1].row.columns[4], function () {\r",
+							"    pm.expect(jsonData[1].row.columns[4]).to.eql(pm.environment.get(\"releaseId01\"));\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "\r\n{\r\n  \"ksql\": \"SELECT * FROM builds_table WHERE id LIKE '%input%' EMIT CHANGES LIMIT 1;\",\r\n  \"streamsProperties\": {}\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://34.234.80.247:8088/query",
+					"protocol": "http",
+					"host": [
+						"34",
+						"234",
+						"80",
+						"247"
+					],
+					"port": "8088",
+					"path": [
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch Data Copy",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var input = {\"id\":174382};\r",
+							"pm.environment.set(\"input01\", input);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"\r",
+							"\r",
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							" pm.environment.set(\"releaseId01\", jsonData[1].row.columns[4]);\r",
+							"pm.environment.set(\"id01\", jsonData[1].row.columns[0]);\r",
+							"\r",
+							"pm.test(\"Response code: \" + pm.response.code + \"\\n Reponse body: \" + pm.response.text(), function () {\r",
+							"    pm.response.to.have.status('OK');\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response data has release id \" + jsonData[1].row.columns[4], function () {\r",
+							"    pm.expect(jsonData[1].row.columns[4]).to.eql(pm.environment.get(\"releaseId01\"));\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "\r\n{\r\n  \"ksql\": \"SELECT * FROM builds_table WHERE id LIKE '%input%' EMIT CHANGES LIMIT 1;\",\r\n  \"streamsProperties\": {}\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://34.234.80.247:8088/query",
+					"protocol": "http",
+					"host": [
+						"34",
+						"234",
+						"80",
+						"247"
+					],
+					"port": "8088",
+					"path": [
+						"query"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
