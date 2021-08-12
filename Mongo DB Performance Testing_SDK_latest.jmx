@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="databaseName" elementType="Argument">
+            <stringProp name="Argument.name">databaseName</stringProp>
+            <stringProp name="Argument.value">MongoSpike</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="collectionName" elementType="Argument">
+            <stringProp name="Argument.name">collectionName</stringProp>
+            <stringProp name="Argument.value">defect</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="mongoConnection" elementType="Argument">
+            <stringProp name="Argument.name">mongoConnection</stringProp>
+            <stringProp name="Argument.value">mongodb+srv://ta-mongodb-user:admin123@cluster0.fdagk.mongodb.net/MongoSpike?retryWrites=true&amp;w=majority</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"></stringProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="CRUD Operations in DB" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">stopthread</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Connection to DB" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+//import com.mongodb.client.InitialDnsSeedlistDiscoveryTest;
+
+import org.bson.Document;
+
+import java.util.Arrays;
+
+try {
+
+MongoClient mongoClient = MongoClients.create(vars.get(&quot;mongoConnection&quot;));	
+	
+	MongoDatabase database = mongoClient.getDatabase(vars.get(&quot;databaseName&quot;));
+	MongoCollection&lt;Document&gt; collection = database.getCollection(vars.get(&quot;collectionName&quot;));
+	
+	vars.putObject(&quot;collection&quot;, collection);
+	
+	return &quot;Connected to &quot; + vars.get(&quot;collectionName&quot;);
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Creating a document and inserting it into DB" enabled="false">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.client.MongoCollection;
+
+import org.bson.Document;
+
+import java.util.Arrays;
+
+try {
+	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collectionName&quot;);
+	
+	Document document = new Document(&quot;firstName&quot;, &quot;Expert&quot;)
+		.append(&quot;lastName&quot;, &quot;Protocolson&quot;)
+		.append(&quot;age&quot;, 37)
+		.append(&quot;occupation&quot;, &quot;DevOps&quot;)
+		.append(&quot;skills&quot;, Arrays.asList(&quot;System Administration&quot;, &quot;Linux&quot;))
+		.append(&quot;adress&quot;, new Document(&quot;city&quot;, &quot;Systemberg&quot;)
+			.append(&quot;street&quot;, &quot;Data Line&quot;)
+			.append(&quot;house&quot;, 42));
+	
+	collection.insertOne(document);
+
+	return &quot;Document inserted&quot;;
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Read the documents in the DB" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">false</stringProp>
+          <stringProp name="script">import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoCollection;
+import org.bson.Document;
+import java.util.Arrays;
+import com.mongodb.client.MongoCursor;
+import static com.mongodb.client.model.Filters.*;
+import com.mongodb.client.result.DeleteResult;
+import static com.mongodb.client.model.Updates.*;
+import com.mongodb.client.result.UpdateResult;
+import java.util.ArrayList;
+import java.util.List;
+
+
+try {
+
+	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
+	Document result = collection.find(eq(&quot;defectid&quot;, 4496623)).first();
+	
+	vars.put(&quot;exampleDocumentId&quot;, result.get(&quot;_id&quot;).toString());
+	return &quot;Document with id=&quot; + result.get(&quot;_id&quot;) + &quot; found&quot;;
+
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Read the documents in the DB2" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">false</stringProp>
+          <stringProp name="script">import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoCollection;
+import org.bson.Document;
+import java.util.Arrays;
+import com.mongodb.client.MongoCursor;
+import static com.mongodb.client.model.Filters.*;
+import com.mongodb.client.result.DeleteResult;
+import static com.mongodb.client.model.Updates.*;
+import com.mongodb.client.result.UpdateResult;
+import java.util.ArrayList;
+import java.util.List;
+import static com.mongodb.client.model.Filters.eq;
+
+
+try {
+
+	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
+	Document result1 = collection.find(eq(&quot;clientid&quot;, 37635)).limit(10);
+	
+//	vars.put(&quot;exampleDocumentId&quot;, result.get(&quot;_id&quot;).toString());
+//	return &quot;Document with id=&quot; + result.get(&quot;_id&quot;) + &quot; found&quot;;	
+//	return &quot;Collection is fetched  &quot; + result1.get(&quot;collection&quot;).toString();
+
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Read the documents in the DB3" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">false</stringProp>
+          <stringProp name="script">import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoCollection;
+import org.bson.Document;
+import java.util.Arrays;
+import com.mongodb.client.MongoCursor;
+import static com.mongodb.client.model.Filters.*;
+import com.mongodb.client.result.DeleteResult;
+import static com.mongodb.client.model.Updates.*;
+import com.mongodb.client.result.UpdateResult;
+import java.util.ArrayList;
+import java.util.List;
+import static com.mongodb.client.model.Filters.eq;
+
+Map&lt;String, ByteIterator&gt; result) {
+try {
+ MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
+// Document query = new Document(&quot;_id&quot;, key);
+ FindIterable&lt;Document&gt; findIterable = collection.find(eq(&quot;clientid&quot;, 37635));
+  Document projection = new Document();
+  for (String field : fields) {
+   projection.put(field, INCLUDE);
+  findIterable.projection(projection);
+ Document queryResult = findIterable.limit(10);
+
+//try {
+//
+//	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
+//	Document result1 = collection.find(eq(&quot;clientid&quot;, 37635)).limit(10);
+//	
+//	vars.put(&quot;exampleDocumentId&quot;, result.get(&quot;_id&quot;).toString());
+//	return &quot;Document with id=&quot; + result.get(&quot;_id&quot;) + &quot; found&quot;;	
+//	return &quot;Collection is fetched  &quot; + result1.get(&quot;collection&quot;).toString();
+
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Updating the documents in DB" enabled="false">
+          <stringProp name="scriptLanguage">java</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.client.MongoCollection;
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Updates.*;
+
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+try {
+	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
+	
+	collection.updateOne(
+		eq(&quot;_id&quot;, new ObjectId(vars.get(&quot;exampleDocumentId&quot;))),
+		combine(set(&quot;occupation&quot;, &quot;Project Manager&quot;), set(&quot;adress.city&quot;, &quot;New Codeshire&quot;), currentDate(&quot;lastModified&quot;)));
+
+	return &quot;Document with id=&quot; + vars.get(&quot;exampleDocumentId&quot;) + &quot; modified&quot;;
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Deleting the document from collection" enabled="false">
+          <stringProp name="scriptLanguage">java</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import com.mongodb.client.MongoCollection;
+import static com.mongodb.client.model.Filters.*;
+
+import org.bson.Document;
+
+try {
+	MongoCollection&lt;Document&gt; collection = vars.getObject(&quot;collection&quot;);
+	
+	collection.deleteOne(eq(&quot;occupation&quot;, &quot;Project Manager&quot;));
+
+	return &quot;Document deleted&quot;;
+}
+catch (Exception e) {
+	SampleResult.setSuccessful(false);
+	SampleResult.setResponseCode(&quot;500&quot;);
+	SampleResult.setResponseMessage(&quot;Exception: &quot; + e);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
